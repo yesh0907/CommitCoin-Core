@@ -38,12 +38,13 @@ class Blockchain {
     }
     
     getGenisisBlock() {
+        let time = new Date().getTime() / 1000;
         return new Block(
             0,
             "0", 
-            new Date().getTime() / 1000,
+            time,
             "Initialized Blockchain",
-            '3ae9b6dfa1a745ef6528f944702ecd4586f231b95c74cd9c0df395d0a9fc18f9'
+            Block.calculateHash(0, "0", time, "Initialized Blockchain")
         );
     }
 

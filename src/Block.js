@@ -9,7 +9,7 @@ class Block {
         this.hash = hash.toString();
     }
     static calculateHash(index, prevHash, timestamp, data) {
-        return CryptoJS.SHA256(index + prevHash + timestamp + data).toString();
+        return CryptoJS.SHA1(index + prevHash + timestamp + data).toString();
     }
     toJSON() {
         return {
