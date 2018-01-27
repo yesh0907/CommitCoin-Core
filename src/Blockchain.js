@@ -52,9 +52,6 @@ class Blockchain {
     }
 
     isValidChain(blockchainToValidate) {
-        if (JSON.stringify(blockchainToValidate[0]) !== JSON.stringify(this.getGenisisBlock())) {
-            return false;
-        }
         let tempBlocks = [blockchainToValidate[0]];
         for(let i = 1; i < blockchainToValidate.length; i++) {
             if (this.isValidNewBlock(blockchainToValidate[i], tempBlocks[i - 1])) {
@@ -68,15 +65,19 @@ class Blockchain {
         return true;
     }
 
-    replaceChain(newBlockchain) {
-        if (this.isValidChain(newBlockchain.getFullChain()) && newBlockchain.getFullChain().length > this.blockchain.length) {
+    replaceChain(ChainData) {
+        let newBlockchain = ChainData.map(e => Block.fromJSON(e));
+        if (this.isValidChain(newBlockchain) &&
+                (newBlockchain.length > this.blockchain.length ||
+                    (newBlockchain.length === this.blockchain.length &&
+                    newBlockchain[newBlockchain.length-1].timestamp > this.getLastBlock().timestamp))) {
             console.log('Received new blocks. Replacing current blockchain');
             this.blockchain = newBlockchain;
         }
     }
 
     getFullChain() {
-        return this.blockchain;
+        return this.blockchain.map(e => e.toJSON());
     }
 }
 

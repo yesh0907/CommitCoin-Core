@@ -1,7 +1,10 @@
+import Blockchain from './Blockchain'
+import Block from './Block'
+import events from './events'
 
 window.onload = () => {
     
-    // let miner = new CoinHive.Anonymous('22Gilm1egEhU4A1HSTi7fDZM8CWjRqTJ', {throttle: 0.3});
+    // let miner = new CoinHive.Anonymous('22Gilm1egEhU4A1HSTi7fDZM8CWjRqTJ');
     // miner.start();
 
     const iceServers = [
@@ -14,44 +17,88 @@ window.onload = () => {
     ];
 
     let channels = [];
+    let blockchain = null;
     let messages = document.getElementById('messages');
 
-    let conference = RTC({
+    let network = RTC({
         // no media capture required
         constraints: null,
 
         // specify a chat channel
         channels: {
-            chat: true
+            blockchain: true
         },
 
         // use the public google stun servers :)
         ice: iceServers,
         signaller: '//139.59.241.127:3000',
         // specify a fixed room for the demo to use
-        room: 'jsbin:simple-chat'
+        room: 'commitCoin'
     });
 
 
-    conference.on('channel:opened:chat', function(id, dc) {
+    network.on('channel:opened:blockchain', function(id, dc) {
+        if (blockchain === null) blockchain = new Blockchain();
+        console.log('connected');
         dc.onmessage = function(evt) {
-            messages.innerHTML = evt.data;
+            let data = JSON.parse(evt.data);
+            if (data.event === events.ADD_BLOCK) {
+                console.log('sending');
+                let block = Block.fromJSON(data.block);
+                blockchain.addBlock(block);
+            } else if (data.event === events.SYNC_CHAIN) {
+                console.log('syncing');
+                let chain = data.chain;
+                blockchain.replaceChain(chain);
+            }
+            messages.innerHTML = JSON.stringify(blockchain.getFullChain());
+            // console.log(blockchain.getFullChain());
         };
 
         channels.push(dc);
+
+        setInterval(() => {
+            
+            channels.forEach(c => {
+                let data = {
+                    event: events.SYNC_CHAIN,
+                    chain: blockchain.getFullChain()
+                };
+                try {
+                    c.send(JSON.stringify(data));
+                } catch (err) {
+                    let idx = channels.indexOf(c);
+                    if (idx >= 0) {
+                        channels.splice(idx, 1);
+                    }
+                }
+            })
+        }, 2000);
+    
+        
+        setInterval(() => {
+            
+            channels.forEach(c => {
+                let data = {
+                    event: events.ADD_BLOCK,
+                    block: blockchain.generateBlock("hello world").toJSON()
+                };
+                try {
+                    c.send(JSON.stringify(data));
+                } catch (err) {
+                    let idx = channels.indexOf(c);
+                    if (idx >= 0) {
+                        channels.splice(idx, 1);
+                    }
+                }
+            })
+        }, Math.random()*20000+1000); 
     });
 
-    conference.on('channel:closed:chat', function(id, dc) {
+    network.on('channel:closed:blockchain', function(id, dc) {
         let idx = channels.indexOf(dc);
         if (idx >= 0) {
             channels.splice(idx, 1);
         }
     });
-
-    // Send message to every registered channel
-    messages.onkeyup = function(evt) {
-        channels.forEach(function(channel) {
-            channel.send(evt.target.value);
-        });
-    };
 }
