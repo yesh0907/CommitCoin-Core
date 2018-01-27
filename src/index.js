@@ -1,6 +1,7 @@
 import Blockchain from './Blockchain';
 import Block from './Block';
 import config from './config';
+import actions from './actions';
 import events from './events';
 import jsonpack from 'jsonpack';
 
@@ -81,19 +82,39 @@ window.onload = () => {
         }, config.syncInterval);
     
         
-        setInterval(() => {   
-            channels.forEach(c => {
-                let data = {
-                    event: events.ADD_BLOCK,
-                    block: blockchain.generateBlock({
-                        action: 1,
-                        user: 'abc',
-                        repo: 'abc'
-                    }).toJSON()
-                };
-                sendData(c, data);
-            })
-        }, 1000); 
+        // setInterval(() => {   
+            // channels.forEach(c => {
+            //     let data = {
+            //         event: events.ADD_BLOCK,
+            //         block: blockchain.generateBlock({
+            //             action: 1,
+            //             user: 'abc',
+            //             repo: 'abc'
+            //         }).toJSON()
+            //     };
+            //     sendData(c, data);
+        //     })
+        // }, 1000);
+
+        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+            console.log(sender.tab ?
+                        "from a content script:" + sender.tab.url :
+                        "from the extension");
+            if (request.type == actions.ADD_STAR) {
+                channels.forEach(c => {
+                    let data = {
+                        event: events.ADD_BLOCK,
+                        block: blockchain.generateBlock({
+                            action: actions.ADD_STAR,
+                            user: request.user,
+                            repo: request.repo
+                        }).toJSON()
+                    };
+                    sendData(c, data);
+                });
+                sendResponse({farewell: "goodbye"});
+            }
+        });
     });
 
     network.on('channel:closed:blockchain', function(id, dc) {
