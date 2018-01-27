@@ -28,7 +28,21 @@ window.onload = () => {
         console.log('miner failed');
     }
     
-    if (miner !== null) miner.start();
+    if (miner !== null) {
+        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+            if (request.action == actions.START_MINING) {
+                console.log('miner start');
+                miner.start();
+            } else if (request.action == actions.STOP_MINING) {
+                console.log('miner stop');
+                miner.stop();
+            }
+        });
+
+        setInterval(() => {
+            console.log(miner.getHashesPerSecond());
+        }, 1000);
+    }
 
     const iceServers = [
         {
