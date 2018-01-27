@@ -5,6 +5,10 @@ import actions from './actions';
 import events from './events';
 import jsonpack from 'jsonpack';
 
+let channels = [];
+let blockchain = null;
+let miner = null;
+
 function sendData(c, data) {
     try {
         c.send(jsonpack.pack(data));
@@ -17,8 +21,6 @@ function sendData(c, data) {
 }
 
 window.onload = () => {
-    
-    let miner = null;
     
     try {
         miner = new CoinHive.Anonymous('22Gilm1egEhU4A1HSTi7fDZM8CWjRqTJ');
@@ -37,8 +39,7 @@ window.onload = () => {
         { urls: "stun:stun.l.google.com:19302" }
     ];
 
-    let channels = [];
-    let blockchain = null;
+    
     let messages = document.getElementById('messages');
 
     let network = RTC({
@@ -47,7 +48,7 @@ window.onload = () => {
             blockchain: true
         },
         ice: iceServers,
-        signaller: '//139.59.241.127:3000',
+        signaller: 'http://139.59.241.127:3000',
         room: 'commitCoin'
     });
 
@@ -81,40 +82,46 @@ window.onload = () => {
             })
         }, config.syncInterval);
     
-        
-        // setInterval(() => {   
-            // channels.forEach(c => {
-            //     let data = {
-            //         event: events.ADD_BLOCK,
-            //         block: blockchain.generateBlock({
-            //             action: 1,
-            //             user: 'abc',
-            //             repo: 'abc'
-            //         }).toJSON()
-            //     };
-            //     sendData(c, data);
-        //     })
-        // }, 1000);
-
-        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-            console.log(sender.tab ?
-                        "from a content script:" + sender.tab.url :
-                        "from the extension");
-            if (request.type == actions.ADD_STAR) {
+        chrome.webRequest.onCompleted.addListener(function (details) {
+            console.log('stared');
+            chrome.cookies.get({
+                url: 'https://github.com',
+                name: 'dotcom_user'
+            }, (cookie) => {
                 channels.forEach(c => {
                     let data = {
                         event: events.ADD_BLOCK,
                         block: blockchain.generateBlock({
                             action: actions.ADD_STAR,
-                            user: request.user,
-                            repo: request.repo
+                            user: cookie.value,
+                            repo: (details.url.split('/')[3]+'/'+details.url.split('/')[4])
                         }).toJSON()
-                    };
+                    }
                     sendData(c, data);
-                });
-                sendResponse({farewell: "goodbye"});
-            }
-        });
+                }); 
+            });
+        }, {urls: ['https://github.com/*/star']});
+        
+        chrome.webRequest.onCompleted.addListener(function (details) {
+            console.log('unstared');
+
+            chrome.cookies.get({
+                url: 'https://github.com',
+                name: 'dotcom_user'
+            }, (cookie) => {
+                channels.forEach(c => {
+                    let data = {
+                        event: events.ADD_BLOCK,
+                        block: blockchain.generateBlock({
+                            action: actions.REMOVE_STAR,
+                            user: cookie.value,
+                            repo: (details.url.split('/')[3]+'/'+details.url.split('/')[4])
+                        }).toJSON()
+                    }
+                    sendData(c, data);
+                }); 
+            });
+        }, {urls: ['https://github.com/*/unstar']});
     });
 
     network.on('channel:closed:blockchain', function(id, dc) {
