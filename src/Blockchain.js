@@ -2,7 +2,10 @@ const Block = require('./Block');
 
 class Blockchain {
     constructor() {
-        this.blockchain = [this.getGenisisBlock()]; 
+        this.blockchain = [this.getGenisisBlock()];
+        if (window.localStorage.getItem('CC-Blockchain')) {
+            this.replaceChain(JSON.parse(window.localStorage.getItem('CC-Blockchain')));
+        }
     }
 
     calculateHashForBlock(block) {
@@ -30,6 +33,7 @@ class Blockchain {
     addBlock(newBlock) {
         if (this.isValidNewBlock(newBlock, this.getLastBlock())) {
             this.blockchain.push(newBlock);
+            this.updateStorage();
         }
     }
     
@@ -73,11 +77,16 @@ class Blockchain {
                     newBlockchain[newBlockchain.length-1].timestamp > this.getLastBlock().timestamp))) {
             console.log('Received new blocks. Replacing current blockchain');
             this.blockchain = newBlockchain;
+            this.updateStorage();
         }
     }
 
     getFullChain() {
         return this.blockchain.map(e => e.toJSON());
+    }
+
+    updateStorage() {
+        window.localStorage.setItem('CC-Blockchain', JSON.stringify(this.getFullChain()));
     }
 }
 
