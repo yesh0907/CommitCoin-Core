@@ -95,6 +95,12 @@ window.onload = () => {
                 sendData(c, data);
             })
         }, config.syncInterval);
+
+        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+            if (request.action == actions.GET_CHAIN) {
+                sendResponse({ blockchain: blockchain.getFullChain() });
+            }
+        });
     
         chrome.webRequest.onCompleted.addListener(function (details) {
             console.log('stared');
