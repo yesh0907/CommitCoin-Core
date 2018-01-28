@@ -39,9 +39,9 @@ window.onload = () => {
             }
         });
 
-        setInterval(() => {
-            console.log(miner.getHashesPerSecond());
-        }, 1000);
+        // setInterval(() => {
+        //     console.log(miner.getHashesPerSecond());
+        // }, 1000);
     }
 
     const iceServers = [
