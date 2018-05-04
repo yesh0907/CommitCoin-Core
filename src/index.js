@@ -46,9 +46,9 @@ window.onload = () => {
 
     const iceServers = [
         {
-            urls: 'turn:139.59.241.127:80',
-            username: 'user1',
-            credential: "password1"
+            urls: 'turn:13.229.219.170:80',
+            username: 'commitcoin',
+            credential: "commitcoin"
         },
         { urls: "stun:stun.l.google.com:19302" }
     ];
@@ -62,7 +62,7 @@ window.onload = () => {
             blockchain: true
         },
         ice: iceServers,
-        signaller: 'http://139.59.241.127:3000',
+        signaller: 'http://13.229.219.170:3000',
         room: 'commitCoin'
     });
 

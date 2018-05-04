@@ -1,3 +1,3 @@
 module.exports = {
-    syncInterval: 5000
+    syncInterval: 2000
 }
